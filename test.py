@@ -46,6 +46,7 @@ def get_related_artists(artist_name='', artist_id=False):
                     max_size = int(image['height'])
 
             artists.append({
+                'type': 'artist',
                 'name': artist['name'],
                 'id': artist['id'],
                 'image_url': image_url,
@@ -78,8 +79,18 @@ def find_path_bw_artists(artist1, artist2):
     while len(artists) > 0:
         artist = artists.pop(0)
 
+        if artist['type'] == 'placeholder':
+            print(f'Calling get_related_artists for {artist["name"]}')
+            related_artists = get_related_artists(
+                artist_name=artist['name'],
+                artist_id=artist['id']
+            )
+            artists = related_artists + artists
+            continue
+
         if artist['id'] in seen:
             continue
+
         seen[artist['id']] = True
         parents[artist['id']] = {
                                     'id': artist['parent_id'],
@@ -87,8 +98,6 @@ def find_path_bw_artists(artist1, artist2):
                                 }
 
         if artist['name'].upper() == artist2.upper():
-            # print(parents)
-            # return 'path found!!!'
             print('path found!!!')
             path = [artist['name']]
             artist_id = artist['id']
@@ -101,11 +110,12 @@ def find_path_bw_artists(artist1, artist2):
                 artist_name = parent['name']
                 return path
 
-        related_artists = get_related_artists(
-                                artist_name=artist['name'],
-                                artist_id=artist['id']
-                            )
-        artists += related_artists
+        artists += [{
+            'type': 'placeholder',
+            'id': artist['id'],
+            'name': artist['name']
+        }]
+
 
 
 if __name__ == "__main__":
