@@ -29,13 +29,15 @@ def get_artist_id(artist_name):
         return False
 
 
-def get_related_artists(artist_name='', artist_id=False):
+def get_related_artists(artist_name='', artist_id=False, depth=0):
     artist_id = artist_id or get_artist_id(artist_name)
     if artist_id:
         headers = {'Authorization': f'Bearer {BEARER_TOKEN}'}
         url = f'https://api.spotify.com/v1/artists/{artist_id}/related-artists'
 
         r_raw = get_request(url, headers=headers)
+        if not r_raw:
+            return False
         artists = []
         for artist in r_raw.json()['artists']:
             image_url = ''
@@ -51,7 +53,8 @@ def get_related_artists(artist_name='', artist_id=False):
                 'id': artist['id'],
                 'image_url': image_url,
                 'parent_id': artist_id,
-                'parent_name': artist_name
+                'parent_name': artist_name,
+                'depth':depth
             })
 
         return artists
@@ -72,19 +75,28 @@ def find_path_bw_artists(artist1, artist2):
         efficiency idea:
             instead of calling 'get_related_artists' every time, just add a placeholder
             when get to placeholder, then call get_related_artists
+        
+        problem is that each artist has 20 related artists
+            so, depth 1 is looking at 20 artists
+            depth 2, 20*20 = 400 artists
+            depth 3, 20*20*20 = 8000 artists...
+        My api calls are limited
     '''
-    artists = get_related_artists(artist1)
+    artists = get_related_artists(artist1, depth=1)
     seen = {}
     parents = {}
     while len(artists) > 0:
         artist = artists.pop(0)
 
         if artist['type'] == 'placeholder':
-            print(f'Calling get_related_artists for {artist["name"]}')
+            print(f'Depth: {artist["depth"]} | Calling get_related_artists for {artist["name"]}')
             related_artists = get_related_artists(
-                artist_name=artist['name'],
-                artist_id=artist['id']
-            )
+                                    artist_name=artist['name'],
+                                    artist_id=artist['id'],
+                                    depth=artist['depth'] + 1
+                                )
+            if not related_artists:
+                return "Something went wrong in api call"
             artists = related_artists + artists
             continue
 
@@ -113,7 +125,8 @@ def find_path_bw_artists(artist1, artist2):
         artists += [{
             'type': 'placeholder',
             'id': artist['id'],
-            'name': artist['name']
+            'name': artist['name'],
+            'depth': artist['depth']
         }]
 
 
@@ -121,4 +134,4 @@ def find_path_bw_artists(artist1, artist2):
 if __name__ == "__main__":
     # print(get_artist_id('obituary'))
     # print(get_related_artists('obituary'))
-    print(find_path_bw_artists('obituary', 'metallica'))
+    print(find_path_bw_artists('jack johnson', 'jack white'))

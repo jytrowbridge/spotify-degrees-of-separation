@@ -7,12 +7,16 @@ def get_request(url, headers={}, params={}):
         r.raise_for_status()
     except requests.exceptions.HTTPError as errh:
         print("Http Error:", errh)
+        return False
     except requests.exceptions.ConnectionError as errc:
         print("Error Connecting:", errc)
+        return False
     except requests.exceptions.Timeout as errt:
         print("Timeout Error:", errt)
+        return False
     except requests.exceptions.RequestException as err:
         print("Error:", err)
+        return False
     return r
 
 
@@ -22,10 +26,14 @@ def post_request(url, headers={}, body={}):
         r.raise_for_status()
     except requests.exceptions.HTTPError as errh:
         print("Http Error:", errh)
+        return False
     except requests.exceptions.ConnectionError as errc:
         print("Error Connecting:", errc)
+        return False
     except requests.exceptions.Timeout as errt:
         print("Timeout Error:", errt)
+        return False
     except requests.exceptions.RequestException as err:
         print("Error:", err)
+        return False
     return r
